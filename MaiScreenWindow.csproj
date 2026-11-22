@@ -6,7 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <AssemblyName>ScreenLens</AssemblyName>
+    <AssemblyName>MaiScreenWindow</AssemblyName>
     <RootNamespace>ScreenLens</RootNamespace>
     <Version>1.0.0</Version>
     <Product>MaiScreen</Product>

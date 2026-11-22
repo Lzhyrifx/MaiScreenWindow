@@ -3,11 +3,12 @@
 解决maimai屏幕被外壳挡住时，鼠标点不到目标的问题\
 运行此程序按住 **Alt**，在屏幕空白处浮出一个小窗\
 跟随鼠标并把鼠标周围显示出来,松开就消失\
-也可以使用快捷键Ctrl+Alt+O进行固定（松开Alt小窗不消失）
+可使用快捷键Ctrl+Alt+O进行固定（松开Alt小窗不消失）
 
 ## 运行
 
-releases下载exe文件后运行
+下载并安装[.NET8.0](https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe)\
+在releases下载exe文件后运行
 
 ## 配置
 

@@ -8,7 +8,7 @@
 ## 运行
 
 下载并安装[.NET8.0](https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe)\
-在releases下载exe文件后运行
+在releases下载zip文件解压后运行
 
 ## 配置
 
@@ -19,12 +19,12 @@
 ```
 ; 更改之后托盘右键 -> 重新加载配置（或重启程序）
 
-; 小窗左上角坐标
-x=2168
-y=1128
+; 小窗左上角坐标(手台推荐配置)
+x=300
+y=1600
 
 ; 小窗大小
-width=360
+width=400
 height=280
 
 ; 放大倍数
@@ -37,4 +37,3 @@ autostart=0
 更改之后托盘右键 ->「重新加载 config.ini」立刻生效，不用重启
 
 坐标：按住 Alt 时小窗左下角显示当前鼠标坐标
-

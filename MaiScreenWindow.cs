@@ -103,18 +103,25 @@ namespace ScreenLens
 
     }
     
-    // config.ini
+
     internal sealed class Config
     {
         public const string FileName = "config.ini";
+        
+        private const int DefaultX = 1000;
+        private const int DefaultY = 500;
+        private const int DefaultWidth = 400; 
+        private const int DefaultHeight = 280; 
+        private const double DefaultZoom = 1.0;
+        private const bool DefaultAutoStart = false;
 
         public int X { get; set; }
         public int Y { get; set; }
-        public int Width { get; set; } = 360;
-        public int Height { get; set; } = 280;
-        public double Zoom { get; set; } = 1.0;
+        public int Width { get; set; } = DefaultWidth;
+        public int Height { get; set; } = DefaultHeight;
+        public double Zoom { get; set; } = DefaultZoom;
         
-        public bool AutoStart { get; set; } = false;
+        public bool AutoStart { get; set; } = DefaultAutoStart;
 
         public string Path { get; private set; } = "";
 
@@ -123,8 +130,8 @@ namespace ScreenLens
             var cfg = new Config { Path = ResolvePath() };
             
             Rectangle wa = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1920, 1080);
-            cfg.X = wa.Right - cfg.Width - 32;
-            cfg.Y = wa.Bottom - cfg.Height - 32;
+            cfg.X = DefaultX >= 0 ? DefaultX : wa.Right - cfg.Width - 32;
+            cfg.Y = DefaultY >= 0 ? DefaultY : wa.Bottom - cfg.Height - 32;
 
             if (File.Exists(cfg.Path))
             {
@@ -335,7 +342,7 @@ namespace ScreenLens
             _tray = new NotifyIcon
             {
                 Icon = SystemIcons.Application,
-                Text = "ScreenLens：按住 Alt 放大鼠标附近，Ctrl+Alt+O 固定",
+                Text = "MaiScreenWindow：按住 Alt 放大鼠标附近，Ctrl+Alt+O 固定",
                 Visible = true
             };
             var menu = new ContextMenuStrip();

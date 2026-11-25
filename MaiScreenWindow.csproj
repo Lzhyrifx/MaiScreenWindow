@@ -10,7 +10,7 @@
     <RootNamespace>ScreenLens</RootNamespace>
     <Version>1.0.0</Version>
     <Product>MaiScreen</Product>
-    <Description>按住 Alt 放大鼠标附近画面的取景镜</Description>
+    <Description>有效区外自动显示、有效区内按住显示的取景镜</Description>
   </PropertyGroup>
 
 </Project>

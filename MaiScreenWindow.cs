@@ -737,7 +737,7 @@ namespace ScreenLens
                 text.AppendLine("; 开机自启：1 打开 / 0 关闭（默认关闭）");
                 text.AppendLine("autostart=" + (AutoStart ? "1" : "0"));
                 text.AppendLine();
-                text.AppendLine("; 小窗显示系统原生鼠标图标：1 显示 / 0 用十字准星");
+                text.AppendLine("; 小窗显示系统原生鼠标光标：1 显示 / 0 用十字准星");
                 text.AppendLine("cursor.real=" + (CursorReal ? "1" : "0"));
                 text.AppendLine();
                 text.AppendLine("; 以下需配置有效区后启用");

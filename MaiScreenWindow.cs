@@ -70,6 +70,11 @@ namespace ScreenLens
         public const uint SwpNoActivate = 0x0010;
         public const uint SwpShowWindow = 0x0040;
 
+        public const uint MonitorDefaultToNearest = 0x00000002;
+
+        public const int GwlStyle = -16;
+        public const long WsCaption = 0x00C00000L;
+
         public static readonly nint HwndTopmost = new IntPtr(-1);
 
         [StructLayout(LayoutKind.Sequential)]
@@ -77,6 +82,26 @@ namespace ScreenLens
         {
             public int X;
             public int Y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Rect
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+
+            public Rectangle ToRectangle() => Rectangle.FromLTRB(Left, Top, Right, Bottom);
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MonitorInfo
+        {
+            public int cbSize;
+            public Rect Monitor;
+            public Rect Work;
+            public uint Flags;
         }
 
 #pragma warning disable CS0649 // 字段由 Win32 钩子回调填充
@@ -122,6 +147,30 @@ namespace ScreenLens
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool SetWindowPos(nint hWnd, nint hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        [DllImport("user32.dll")]
+        public static extern nint GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        public static extern uint GetWindowThreadProcessId(nint hWnd, out uint processId);
+
+        [DllImport("user32.dll")]
+        public static extern bool IsWindowVisible(nint hWnd);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        public static extern int GetClassName(nint hWnd, StringBuilder name, int maxCount);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
+        public static extern int GetWindowLong(nint hWnd, int index);
+
+        [DllImport("user32.dll")]
+        public static extern nint MonitorFromWindow(nint hWnd, uint flags);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        public static extern bool GetMonitorInfo(nint hMonitor, ref MonitorInfo info);
+
+        [DllImport("user32.dll")]
+        public static extern bool GetWindowRect(nint hWnd, out Rect rect);
     }
 
     internal static class AutoStart
@@ -382,6 +431,7 @@ namespace ScreenLens
         public EffectiveArea ValidArea { get; } = new EffectiveArea();
         public bool ValidEnabled { get; set; } = true;
         public bool ValidOutline { get; set; }
+        public bool HideInFullscreen { get; set; } = true;
 
         public List<string> Warnings { get; } = new List<string>();
         public string Path { get; private set; } = "";
@@ -489,6 +539,11 @@ namespace ScreenLens
                     case "valid.outline":
                         ValidOutline = ParseBool(value, ValidOutline);
                         break;
+                    case "fullscreen":
+                    case "fullscreen.hide":
+                    case "hide.fullscreen":
+                        HideInFullscreen = ParseBool(value, HideInFullscreen);
+                        break;
                     case "valid.rect":
                         AddValidRectangle(value);
                         break;
@@ -498,8 +553,7 @@ namespace ScreenLens
                 }
             }
         }
-
-        /// <summary>没有配置文件时写进示例的默认有效区（手台推荐配置）。</summary>
+        
         private void AddDefaultValidArea()
         {
             AddValidRectangle("200,100;1062,389");
@@ -684,11 +738,14 @@ namespace ScreenLens
                 text.AppendLine("; 是否在屏幕上画出有效区边缘：1 显示 / 0 不显示");
                 text.AppendLine("valid.outline=" + (ValidOutline ? "1" : "0"));
                 text.AppendLine();
-                text.AppendLine("; 矩形区域：左上x,左上y;右下x,右下y");
+                text.AppendLine("; 矩形区域：左上x,左上y;右下x,右下y(无需矩形可在valid前加';'注释)");
                 AppendRectangles(text);
                 text.AppendLine();
-                text.AppendLine("; 圆形：圆周上任意三点x1,y1;x2,y2;x3,y3");
+                text.AppendLine("; 圆形：圆周上任意三点x1,y1;x2,y2;x3,y3(无需圆形可在valid前加';'注释)");
                 AppendCircles(text);
+                text.AppendLine();
+                text.AppendLine("; 有全屏程序（游戏、全屏视频等）时隐藏小窗（只在启用有效区时生效，默认开启）：1 隐藏 / 0 照常显示");
+                text.AppendLine("fullscreen.hide=" + (HideInFullscreen ? "1" : "0"));
 
                 File.WriteAllText(Path, text.ToString());
             }
@@ -759,6 +816,7 @@ namespace ScreenLens
         private Point _cursor;
         private bool _pinned;
         private bool _active;
+        private bool _fullscreen;
 
         private nint _hook = IntPtr.Zero;
         private Native.LowLevelKeyboardProc? _hookProc;
@@ -827,6 +885,10 @@ namespace ScreenLens
                                             Native.GetModuleHandle(null), 0);
 
             ShowConfigWarnings();
+            
+            Native.GetCursorPos(out Native.Point startPoint);
+            _fullscreen = VisibilityPolicy.ShouldYieldToFullscreen(_cfg.IsValidAreaActive, _cfg.HideInFullscreen,
+                FullscreenGuard.IsForegroundFullscreen(startPoint.X, startPoint.Y));
             UpdateOutline();
             _timer.Start();
         }
@@ -855,7 +917,7 @@ namespace ScreenLens
 
         private void UpdateOutline()
         {
-            bool shouldShow = _cfg.ValidEnabled && _cfg.ValidOutline && !_cfg.ValidArea.IsEmpty;
+            bool shouldShow = _cfg.ValidEnabled && _cfg.ValidOutline && !_cfg.ValidArea.IsEmpty && !_fullscreen;
             if (!shouldShow)
             {
                 if (_outline is { Visible: true }) _outline.Hide();
@@ -979,8 +1041,17 @@ namespace ScreenLens
             bool holdHeld = _cfg.HoldHotkey.IsDown();
             bool validAreaActive = _cfg.IsValidAreaActive;
             bool insideValidArea = validAreaActive && _cfg.ValidArea.Contains(_cursor.X, _cursor.Y);
+            
+            bool fullscreen = VisibilityPolicy.ShouldYieldToFullscreen(validAreaActive, _cfg.HideInFullscreen,
+                FullscreenGuard.IsForegroundFullscreen(_cursor.X, _cursor.Y));
+            if (fullscreen != _fullscreen)
+            {
+                _fullscreen = fullscreen;
+                UpdateOutline();
+            }
 
-            if (!VisibilityPolicy.ShouldShow(_pinned, holdHeld, validAreaActive, insideValidArea))
+            if (fullscreen ||
+                !VisibilityPolicy.ShouldShow(_pinned, holdHeld, validAreaActive, insideValidArea))
             {
                 if (_active)
                 {

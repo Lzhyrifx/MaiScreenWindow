@@ -10,7 +10,6 @@ namespace ScreenLens
         public double Y { get; } = y;
         public double Radius { get; } = radius;
 
-        /// <summary>配置里原始的“三点”文本，写回配置文件时原样保留。</summary>
         public string Text { get; } = text;
 
         public bool Contains(double x, double y)
@@ -45,8 +44,7 @@ namespace ScreenLens
             return true;
         }
     }
-
-    /// <summary>有效区：长方形与圆形的并集。</summary>
+    
     internal sealed class EffectiveArea
     {
         private readonly List<Rectangle> _rectangles = new List<Rectangle>();
@@ -85,8 +83,7 @@ namespace ScreenLens
             return false;
         }
     }
-
-    /// <summary>小窗显隐规则。</summary>
+    
     internal static class VisibilityPolicy
     {
         public static bool ShouldShow(bool pinned, bool holdHeld, bool validAreaActive, bool insideValidArea)
@@ -94,6 +91,11 @@ namespace ScreenLens
             if (pinned) return true;
             if (!validAreaActive) return holdHeld;
             return !insideValidArea || holdHeld;
+        }
+
+        public static bool ShouldYieldToFullscreen(bool validAreaActive, bool hideInFullscreen, bool foregroundFullscreen)
+        {
+            return validAreaActive && hideInFullscreen && foregroundFullscreen;
         }
     }
 }

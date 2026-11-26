@@ -423,6 +423,7 @@ namespace ScreenLens
         public int Width { get; set; } = DefaultWidth;
         public int Height { get; set; } = DefaultHeight;
         public double Zoom { get; set; } = DefaultZoom;
+        public bool CursorReal { get; set; } = true;
         public bool AutoStart { get; set; }
 
         public HotkeySpec HoldHotkey { get; set; } = HotkeySpec.ParseOrFallback("Alt");
@@ -508,6 +509,11 @@ namespace ScreenLens
                         break;
                     case "zoom":
                         Zoom = ParseDouble(value, Zoom);
+                        break;
+                    case "cursor":
+                    case "cursor.real":
+                    case "cursor.native":
+                        CursorReal = ParseBool(value, CursorReal);
                         break;
                     case "autostart":
                     case "startup":
@@ -730,6 +736,9 @@ namespace ScreenLens
                 text.AppendLine();
                 text.AppendLine("; 开机自启：1 打开 / 0 关闭（默认关闭）");
                 text.AppendLine("autostart=" + (AutoStart ? "1" : "0"));
+                text.AppendLine();
+                text.AppendLine("; 小窗显示系统原生鼠标图标：1 显示 / 0 用十字准星");
+                text.AppendLine("cursor.real=" + (CursorReal ? "1" : "0"));
                 text.AppendLine();
                 text.AppendLine("; 以下需配置有效区后启用");
                 text.AppendLine();
@@ -1126,13 +1135,16 @@ namespace ScreenLens
                 float scaleY = ClientSize.Height / (float)_src.Height;
                 float cursorX = (_cursor.X - _src.X + 0.5f) * scaleX;
                 float cursorY = (_cursor.Y - _src.Y + 0.5f) * scaleY;
+                
+                if (!(_cfg.CursorReal && CursorIcon.Draw(graphics, cursorX, cursorY, scaleX)))
+                {
+                    using var cross = new Pen(Color.FromArgb(235, 255, 48, 48), 1.5f);
+                    graphics.DrawLine(cross, cursorX - 16, cursorY, cursorX + 16, cursorY);
+                    graphics.DrawLine(cross, cursorX, cursorY - 16, cursorX, cursorY + 16);
 
-                using var cross = new Pen(Color.FromArgb(235, 255, 48, 48), 1.5f);
-                graphics.DrawLine(cross, cursorX - 16, cursorY, cursorX + 16, cursorY);
-                graphics.DrawLine(cross, cursorX, cursorY - 16, cursorX, cursorY + 16);
-
-                using var ring = new Pen(Color.FromArgb(235, 255, 230, 0), 1.2f);
-                graphics.DrawEllipse(ring, cursorX - 5, cursorY - 5, 10, 10);
+                    using var ring = new Pen(Color.FromArgb(235, 255, 230, 0), 1.2f);
+                    graphics.DrawEllipse(ring, cursorX - 5, cursorY - 5, 10, 10);
+                }
             }
 
             string info = _cursor.X + "," + _cursor.Y +

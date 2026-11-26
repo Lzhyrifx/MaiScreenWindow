@@ -744,7 +744,7 @@ namespace ScreenLens
                 text.AppendLine("; 圆形：圆周上任意三点x1,y1;x2,y2;x3,y3(无需圆形可在valid前加';'注释)");
                 AppendCircles(text);
                 text.AppendLine();
-                text.AppendLine("; 有全屏程序（游戏、全屏视频等）时隐藏小窗（只在启用有效区时生效，默认开启）：1 隐藏 / 0 照常显示");
+                text.AppendLine("; 有全屏程序时不自动显示小窗：1 隐藏 / 0 照常显示");
                 text.AppendLine("fullscreen.hide=" + (HideInFullscreen ? "1" : "0"));
 
                 File.WriteAllText(Path, text.ToString());

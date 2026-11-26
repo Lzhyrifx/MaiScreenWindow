@@ -9,7 +9,7 @@
 ## 运行
 
 下载并安装[.NET8.0](https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe)\
-在releases下载zip文件解压后运行
+在[releases](https://github.com/Lzhyrifx/MaiScreenWindow/releases)下载zip文件解压后运行
 
 ## 配置
 
